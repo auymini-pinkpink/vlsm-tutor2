@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VLSM Tutor - Subnetting Master Studio</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="container header-container">
+      <div class="brand">
+        <h1>VLSM Tutor</h1>
+        <span class="subtitle">Subnetting Master Studio</span>
+      </div>
+      <div class="header-actions">
+        <div class="streak-badge" title="Daily Practice Streak">
+          🔥 <span id="streak-count">0</span> Streak
+        </div>
+        <button id="theme-toggle" aria-label="Toggle Theme">☀️ Light</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="container tabs">
+    <button class="tab-btn active" data-tab="calculator">🧮 Calculator</button>
+    <button class="tab-btn" data-tab="teach">📚 Teach Me</button>
+    <button class="tab-btn" data-tab="practice">🎓 Practice</button>
+    <button class="tab-btn" data-tab="reference">📋 Reference Sheet</button>
+  </nav>
+
+  <main class="container">
+    <!-- Calculator Tab -->
+    <section id="calculator" class="tab-content active">
+      <div class="card">
+        <h2>⚙️ Network Initialization</h2>
+        <div class="form-group">
+          <label for="base-ip">MAJOR NETWORK PREFIX</label>
+          <input type="text" id="base-ip" value="192.168.1.0/24" placeholder="e.g., 192.168.1.0/24" />
+          <small>IPv4 address with CIDR mask (/8 - /30)</small>
+        </div>
+
+        <div class="section-header">
+          <h3>⚙️ SUBNET REQUIREMENTS</h3>
+          <button id="add-subnet-btn" class="secondary-btn">+ Add Subnet</button>
+        </div>
+
+        <div id="subnet-inputs-container" class="subnet-builder-list">
+          <!-- Subnet rows generated via JavaScript -->
+        </div>
+
+        <div class="btn-group">
+          <button id="calc-btn" class="primary-btn">⚡ Calculate VLSM</button>
+          <button id="reset-calc-btn" class="outline-btn">🔄 Reset Defaults</button>
+        </div>
+      </div>
+
+      <!-- Capacity & Results Summary -->
+      <div id="results-wrapper" class="results-wrapper hidden">
+        <div class="card space-allocation-card">
+          <h3>SPACE ALLOCATION</h3>
+          <div class="allocation-bar-container">
+            <div id="allocation-progress-bar" class="allocation-progress-bar"></div>
+          </div>
+          <div class="allocation-stats">
+            <span id="stat-used">0 / 0 IPs Used</span>
+            <span id="stat-percent">0%</span>
+            <span>Total Capacity: <strong id="stat-total">0</strong></span>
+            <span>Unassigned IPs: <strong id="stat-free">0</strong></span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-header">
+            <div>
+              <h3>🗺️ Allocation Results</h3>
+              <p class="subtext">Subnets sorted by size descending (VLSM standard rule)</p>
+            </div>
+            <div class="export-btns">
+              <button id="copy-text-btn" class="outline-btn">📋 Copy Text</button>
+              <button id="download-json-btn" class="outline-btn">📥 JSON</button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>SUBNET NAME</th>
+                  <th>NEEDED</th>
+                  <th>ALLOCATED</th>
+                  <th>NETWORK ADDRESS</th>
+                  <th>USABLE RANGE</th>
+                  <th>BROADCAST</th>
+                </tr>
+              </thead>
+              <tbody id="results-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Teach Me Tab -->
+    <section id="teach" class="tab-content">
+      <div class="card">
+        <h2>📚 Variable Length Subnet Masking (VLSM) Guide</h2>
+        <p>VLSM allows you to allocate IP addresses efficiently by applying different subnet masks to individual subnets based on host demands.</p>
+        
+        <div class="guide-steps">
+          <div class="step-card">
+            <span class="step-num">1</span>
+            <div>
+              <h4>Sort Requirements</h4>
+              <p>Arrange your required host sizes from largest to smallest. Large requests dictate the base block alignment.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <span class="step-num">2</span>
+            <div>
+              <h4>Find Block Size</h4>
+              <p>Add 2 (for Network & Broadcast addresses) to the needed host count, then round up to the nearest power of 2 ($2^n$).</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <span class="step-num">3</span>
+            <div>
+              <h4>Determine Prefix (/CIDR)</h4>
+              <p>Calculate host bits needed ($n$). Subtract from 32 to get your mask ($32 - n$). Example: 100 hosts requires 128 block ($2^7$), prefix is $/25$.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <span class="step-num">4</span>
+            <div>
+              <h4>Assign Next Network ID</h4>
+              <p>Start the next subnet at the previous Broadcast address + 1.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Practice Tab -->
+    <section id="practice" class="tab-content">
+      <div class="card">
+        <h2>🎓 Subnetting Practice Engine</h2>
+        <div id="quiz-card">
+          <p id="quiz-question" class="quiz-question-text"></p>
+          <div id="quiz-options" class="quiz-options-grid"></div>
+          <div id="quiz-feedback" class="feedback-box hidden"></div>
+          <button id="next-question-btn" class="primary-btn hidden">Next Question ➔</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Your Learning Stats</h3>
+        <p>Current Score: <strong id="score-display">0</strong> pts</p>
+        <button id="reset-score-btn" class="danger-btn">Reset Score</button>
+      </div>
+    </section>
+
+    <!-- Reference Tab -->
+    <section id="reference" class="tab-content">
+      <div class="card">
+        <h2>📋 CIDR Reference Sheet</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>CIDR Prefix</th>
+                <th>Subnet Mask</th>
+                <th>Block Size</th>
+                <th>Usable Hosts</th>
+              </tr>
+            </thead>
+            <tbody id="reference-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>VLSM Tutor & Subnetting Engine • Browser LocalStorage Saved</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
