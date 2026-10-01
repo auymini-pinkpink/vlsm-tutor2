@@ -1,14 +1,11 @@
 :root {
-  --bg-color: #0f172a;
-  --text-color: #f8fafc;
-  --card-bg: #1e293b;
-  --border-color: #334155;
-  --primary-color: #3b82f6;
-  --primary-hover: #2563eb;
-  --accent-color: #10b981;
-  --danger-color: #ef4444;
-  --input-bg: #0f172a;
-  --subtext-color: #94a3b8;
+  --bg-color: #121212;        /* True Dark Charcoal */
+  --card-bg: #1e1e2e;         /* Deep Midnight Violet */
+  --border-color: #2a2a3c;    /* Subtle Line */
+  --primary-color: #8b5cf6;   /* Electric Purple */
+  --accent-color: #06b6d4;    /* Cyan Accent */
+  --text-color: #ffffff;      /* Pure White */
+  --subtext-color: #a1a1aa;   /* Soft Gray */
 }
 
 [data-theme="light"] {
