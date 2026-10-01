@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // --- Theme Controller ---
+  // Theme Toggle
   const themeToggle = document.getElementById('theme-toggle');
   const savedTheme = localStorage.getItem('vlsm_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     themeToggle.textContent = newTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
   });
 
-  // --- Tab Navigation ---
+  // Tab Switching
   const tabBtns = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
 
@@ -26,7 +26,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // --- Dynamic Subnet Builder Rows ---
+  // Interactive Host Slider (Teach Me Page)
+  const hostSlider = document.getElementById('host-slider');
+  if (hostSlider) {
+    hostSlider.addEventListener('input', (e) => {
+      const hosts = parseInt(e.target.value);
+      document.getElementById('slider-host-val').textContent = hosts;
+
+      let bits = 1;
+      while ((Math.pow(2, bits) - 2) < hosts) {
+        bits++;
+      }
+
+      const blockSize = Math.pow(2, bits);
+      const usableHosts = blockSize - 2;
+      const prefix = 32 - bits;
+
+      document.getElementById('metric-bits').textContent = bits;
+      document.getElementById('metric-block').textContent = blockSize;
+      document.getElementById('metric-usable').textContent = usableHosts;
+      document.getElementById('metric-prefix').textContent = `/${prefix}`;
+    });
+  }
+
+  // Dynamic Subnet Builder Rows
   const builderContainer = document.getElementById('subnet-inputs-container');
   const addSubnetBtn = document.getElementById('add-subnet-btn');
 
@@ -45,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
       row.innerHTML = `
         <input type="text" class="sub-name" value="${sub.name}" placeholder="Subnet Name" />
         <input type="number" class="sub-hosts" value="${sub.hosts}" placeholder="Hosts Needed" min="1" />
-        <button class="icon-btn remove-row-btn" data-idx="${idx}" title="Remove Subnet">🗑️</button>
+        <button class="icon-btn remove-row-btn" data-idx="${idx}" title="Remove Subnet">🗑️️</button>
       `;
       builderContainer.appendChild(row);
     });
@@ -87,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderSubnetInputs(defaultSubnets);
 
-  // --- IP Conversion Math Helpers ---
+  // IP Math Helpers
   function ipToLong(ip) {
     return ip.split('.').reduce((acc, octet) => ((acc << 8) + parseInt(octet, 10)) >>> 0, 0);
   }
@@ -106,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return longToIp(mask);
   }
 
-  // --- VLSM Calculator Algorithm ---
+  // VLSM Calculator Logic
   let calculatedResults = [];
 
   document.getElementById('calc-btn').addEventListener('click', () => {
@@ -128,9 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const totalNetworkCapacity = Math.pow(2, 32 - baseCidr);
     let currentIpLong = ipToLong(baseIpStr);
-    const startNetworkLong = currentIpLong;
 
-    // Get and sort requirements descending (VLSM rule)
     const rawSubnets = getSubnetInputsData().filter(s => s.hosts > 0);
     rawSubnets.sort((a, b) => b.hosts - a.hosts);
 
@@ -185,9 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currentIpLong += blockSize;
     }
 
-    // Update Statistics Bar
-    const resultsWrapper = document.getElementById('results-wrapper');
-    resultsWrapper.classList.remove('hidden');
+    document.getElementById('results-wrapper').classList.remove('hidden');
 
     const percentUsed = Math.min(100, Math.round((totalAllocatedIps / totalNetworkCapacity) * 100));
     const progressBar = document.getElementById('allocation-progress-bar');
@@ -205,28 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('stat-free').textContent = Math.max(0, totalNetworkCapacity - totalAllocatedIps);
   });
 
-  // --- Export Functionalities ---
-  document.getElementById('copy-text-btn').addEventListener('click', () => {
-    if (calculatedResults.length === 0) return;
-    let text = "NAME\tNEEDED\tPREFIX\tNETWORK\tUSABLE RANGE\tBROADCAST\n";
-    calculatedResults.forEach(r => {
-      text += `${r.name}\t${r.needed}\t${r.prefix}\t${r.netIp}\t${r.usableRange}\t${r.broadcastIp}\n`;
-    });
-    navigator.clipboard.writeText(text);
-    alert('Table copied to clipboard!');
-  });
-
-  document.getElementById('download-json-btn').addEventListener('click', () => {
-    if (calculatedResults.length === 0) return;
-    const blob = new Blob([JSON.stringify(calculatedResults, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'vlsm-allocation.json';
-    a.click();
-  });
-
-  // --- Reference Table Generator ---
+  // Reference Table
   const refTbody = document.getElementById('reference-tbody');
   for (let cidr = 30; cidr >= 8; cidr--) {
     const total = Math.pow(2, 32 - cidr);
@@ -241,25 +239,25 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   }
 
-  // --- Quiz Engine & Progress Tracker ---
+  // Quiz Engine
   let score = parseInt(localStorage.getItem('vlsm_score') || '0');
-  let streak = parseInt(localStorage.getItem('vlsm_streak') || '1');
+  let streak = parseInt(localStorage.getItem('vlsm_streak') || '0');
   
   document.getElementById('score-display').textContent = score;
   document.getElementById('streak-count').textContent = streak;
 
   const quizQuestions = [
     {
+      q: "Which CIDR prefix is required to accommodate at least 3 usable hosts with minimal waste?",
+      opts: ["/27", "/29", "/30", "/28"],
+      ans: 1,
+      exp: "3 usable hosts require a block size of at least 5 addresses + 2 (net/broadcast) = 7. The nearest power of 2 is 8 ($2^3$). $32 - 3 = 29$, so a /29 mask provides 6 usable hosts."
+    },
+    {
       q: "What prefix length (/CIDR) is required to support 50 host addresses?",
       opts: ["/27", "/26", "/25", "/24"],
       ans: 1,
       exp: "50 hosts require 64 total addresses ($2^6$). $32 - 6 = 26$. So prefix is /26."
-    },
-    {
-      q: "How many usable host IPs does a /29 subnet mask provide?",
-      opts: ["6", "8", "14", "30"],
-      ans: 0,
-      exp: "A /29 subnet gives 8 total IPs ($2^3$). Subtracting network and broadcast leaves 6 usable host addresses."
     },
     {
       q: "In VLSM, why must subnet host requirements be ordered from largest to smallest?",
@@ -305,12 +303,17 @@ document.addEventListener('DOMContentLoaded', () => {
       feedbackBox.className = 'feedback-box correct';
       feedbackBox.textContent = `Correct! ${q.exp}`;
       score += 10;
-      localStorage.setItem('vlsm_score', score);
-      document.getElementById('score-display').textContent = score;
+      streak += 1;
     } else {
       feedbackBox.className = 'feedback-box incorrect';
       feedbackBox.textContent = `Incorrect. ${q.exp}`;
+      streak = 0;
     }
+
+    localStorage.setItem('vlsm_score', score);
+    localStorage.setItem('vlsm_streak', streak);
+    document.getElementById('score-display').textContent = score;
+    document.getElementById('streak-count').textContent = streak;
 
     document.getElementById('next-question-btn').classList.remove('hidden');
   }
@@ -322,8 +325,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('reset-score-btn').addEventListener('click', () => {
     score = 0;
+    streak = 0;
     localStorage.setItem('vlsm_score', '0');
+    localStorage.setItem('vlsm_streak', '0');
     document.getElementById('score-display').textContent = score;
+    document.getElementById('streak-count').textContent = streak;
   });
 
   loadQuestion(0);
